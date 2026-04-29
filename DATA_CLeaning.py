@@ -60,22 +60,73 @@ VEHICLE TYPE CODE 2 -- 'Na' becuase its catgorical data
 ON STREET NAME -- 'Na' becuase its catgorical data
 '''
 
+#-----------------Additional filtering & Grouping-----------------------
 
-#Final Audit
-print("--- Original DATA TYPES ---")
-print(df.dtypes)
+bike_variants = ['BICYCLE', 'BICYC', 'BIKE', 'BK']
 
-print("--- FINAL DATA TYPES ---")
-print(df_clean.dtypes)
+moto_variants = [
+    'MOTORBIKE', '2 WHE', '2YDSWHEELL', '50 CC MOTO', '50CC MINI', '50CC SCOOT', 
+    'DIRT BIKE', 'DIRTB', 'DIRTBIKE', 'MNI-MOTORC', 'MO PA', 'MO PE', 'MO PED', 
+    'MO-PE', 'MO-PED', 'MOBILITY', 'MOBILITY S', 'MOBILTY SC', 'MOOPER', 'MOP', 
+    'MOP PAD', 'MOPAD', 'MOPD', 'MOPED', 'MOPED 150C', 'MOPED BIKE', 'MOPED CLAS', 
+    'MOPED GAS', 'MOPED GASO', 'MOPED SCOO', 'MOPEN', 'MOPER', 'MOPET', 'MOPOED', 
+    'MOPPED', 'MOT', 'MOT S', 'MOTER', 'MOTO-SCOOT', 'MOTOR', 'MOTOR DIRT', 
+    'MOTOR SCOO', 'MOTOR UNIC', 'MOTOR WHEE', 'MOTOR. SCO', 'MOTORBIKE', 
+    'MOTORCYCLE', 'MOTORED SC', 'MOTORHOME', 'MOTORIST S', 'MOTORIZED', 
+    'MOTORIZED HOME', 'MOTORIZEDS', 'MOTORSCOOT', 'MOTORSCOOTER', 'YAMAH', 'YAMAHA'
+]
 
-print("\n--- Original MISSING VALUES ---")
-print(df.isnull().sum())
+ebike_variants = [
+    'E-SCOOTER', 'E - B', 'E AMB', 'E BIK', 'E BIKE', 'E BIKE NO', 'E BIKE UNI', 
+    'E BIKE W P', 'E COM', 'E MOPED', 'E MOTORCYC', 'E REVEL SC', 'E SCO', 
+    'E SCOOTER', 'E- BI', 'E- MOTOR B', 'EBIKE', 'ESCOO', 'ESCOOTER', 
+    'ESCOOTER S', 'ESCOOTER W', 'ESCOOTERSI'
+]
 
-print("\n--- REMAINING MISSING VALUES ---")
-print(df_clean.isnull().sum())
+# catorgorizing ()
+vehicle_group = {
+    'SPORT UTILITY / STATION WAGON / SPORT UTILITY VEHICLE': 'SUV',
+    'STATION WAGON/SPORT UTILITY VEHICLE': 'SUV',
+    'PASSENGER VEHICLE': 'SEDAN',
+    '4 DR SEDAN': 'SEDAN',
+    '2 DR SEDAN': 'SEDAN',
+    'PICK-UP TRUCK': 'PICKUP',
+    'UNKNOWN': 'UNSPECIFIED'
+}
 
-print(f"\nOriginal rows: {len(df)}")
-print(f"Final cleaned rows: {len(df_clean)}")
+#----------NOTE-----------
+'''
+Since Data was entered manually, there was alot of discrepency between speliings for similiar items
+'''
+#-------------------------
 
-print("\n---Percentage of Original Rows kept---")
-print((len(df_clean)/len(df))*100)
+
+for x in bike_variants: vehicle_group[x] = 'BIKE'
+for x in moto_variants: vehicle_group[x] = 'MOTORCYCLE'
+for x in ebike_variants: vehicle_group[x] = 'E-BIKE'
+
+#Clean strings and make sure they are following the same syntax
+for col in ['VEHICLE TYPE CODE 1', 'VEHICLE TYPE CODE 2']:
+    df_clean[col] = df_clean[col].str.upper().str.strip()
+    df_clean[col] = df_clean[col].replace(vehicle_group)
+
+#Final aggregation check
+#all_vehicles_involved = pd.concat([df_clean['VEHICLE TYPE CODE 1'], df_clean['VEHICLE TYPE CODE 2']])
+#print("--- Top 20 Vehicles (Combined 1 & 2) ---")
+#print(all_vehicles_involved.value_counts().head(20))
+#----------------- VRU SUBSET & TIME EXTRACTION -----------------
+
+#  Extract the hour (0-23) from CRASH TIME string
+df_clean['CRASH TIME'] = pd.to_datetime(df_clean['CRASH TIME'], format='%H:%M', errors='coerce').dt.hour
+
+# Define vulnerable road users (VRU)
+vru_list = ['BIKE', 'MOTORCYCLE', 'E-BIKE']
+
+#Create the VRU dataframe (Linear filter)
+is_vru = df_clean['VEHICLE TYPE CODE 1'].isin(vru_list)
+df_vru = df_clean[is_vru].copy()
+
+#Drop any rows where the time didn't convert properly
+df_vru = df_vru.dropna(subset=['CRASH TIME'])
+
+#----------------------------------------------------------------
