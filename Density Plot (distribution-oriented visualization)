@@ -1,0 +1,26 @@
+#--------------Density Plot (distribution-oriented visualization)-------------------------
+#Make sure of numeric type
+df_vru['CRASH TIME'] = pd.to_numeric(df_vru['CRASH TIME'], errors='coerce')
+
+#Plotting
+plt.figure(figsize=(12, 6))
+sns.set_theme(style="whitegrid")
+
+'''
+Density Plot can reveal to use when most crashes for 2 wheeled 
+'''
+
+
+# We use common_norm=False so that smaller groups (like E-Bikes) 
+# aren't flattened by the massive number of regular Bike crashes.
+sns.kdeplot(data=df_vru, x='CRASH TIME', hue='VEHICLE TYPE CODE 1', 
+            fill=True, common_norm=False, palette='inferno', alpha=0.1)
+
+plt.title('Crash Probability by Hour: Vulnerable Road Users', fontsize=15)
+plt.xlabel('Hour of Day (0-23)', fontsize=12)
+plt.ylabel('Density of Crashes', fontsize=12)
+plt.xticks(range(0, 24))
+plt.xlim(0, 23)
+plt.tight_layout()
+
+plt.show()
