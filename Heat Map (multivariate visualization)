@@ -1,0 +1,23 @@
+#--------------Heat Map -------------------------
+# Group by Borough and Hour, then count the crashes
+#unstack rotates the graph around and make it easier to undertand
+heatmap_data = df_vru.groupby(['BOROUGH', 'CRASH TIME']).size().unstack(fill_value=0)
+
+# Filter out 'NA' to keep the map focused on known locations
+if 'NA' in heatmap_data.index:
+    heatmap_data = heatmap_data.drop('NA')
+
+
+plt.figure(figsize=(16, 8))
+sns.set_theme(style="white")
+
+
+sns.heatmap(heatmap_data, cmap='inferno', cbar_kws={'label': 'Number of Crashes'})
+
+# 5. Final Polish for the Rubric
+plt.title('Frequency of VRU Crashes: Borough vs. Hour of Day', fontsize=16)
+plt.xlabel('Hour of Day (0-23)', fontsize=12)
+plt.ylabel('Borough', fontsize=12)
+
+plt.tight_layout()
+plt.show()
