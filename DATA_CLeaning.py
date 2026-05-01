@@ -1,6 +1,10 @@
 import pandas as pd
 import numpy as np 
 import matplotlib.pyplot as plt
+import seaborn as sns
+import geopandas as gpd
+import plotly as pl
+
 
 file_path = "/Users/kushagrarajpurohit/Desktop/CmpSci_Project/Motor_Vehicle_Collisions_-_Crashes_20260428.csv"
 df = pd.read_csv(file_path, low_memory=False)
