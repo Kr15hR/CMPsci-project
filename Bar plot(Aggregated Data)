@@ -1,0 +1,25 @@
+#--------------Bar plot(Aggregated Data)------------
+# 1. Group by BOTH Borough and Vehicle Type
+# We calculate the mean number of injuries
+severity_grouped = df_vru.groupby(['BOROUGH', 'VEHICLE TYPE CODE 1'])['NUMBER OF PERSONS INJURED'].mean().reset_index()
+
+# 2. Filter out 'NA' if needed
+severity_grouped = severity_grouped[severity_grouped['BOROUGH'] != 'NA']
+
+# 3. Plotting
+plt.figure(figsize=(14, 8))
+sns.set_theme(style="whitegrid")
+
+# 'hue' adds the second layer of grouping
+sns.barplot(data=severity_grouped, 
+            x='BOROUGH', 
+            y='NUMBER OF PERSONS INJURED', 
+            hue='VEHICLE TYPE CODE 1',
+            palette='colorblind')
+
+plt.title('Severity Analysis: Mean Injuries by Borough & Vehicle Type', fontsize=16)
+plt.ylabel('Average Number of Injuries')
+plt.legend(title='Vehicle Type', bbox_to_anchor=(1.05, 1), loc='upper left')
+
+plt.tight_layout()
+plt.show()
