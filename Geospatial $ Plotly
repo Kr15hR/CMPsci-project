@@ -1,0 +1,49 @@
+# Filter out rows that dont have coordinates
+df_geo = df_vru.dropna(subset=['LATITUDE', 'LONGITUDE']).copy
+
+# Keep only coordinates that are actually in NYC
+df_geo = df_geo[df_geo['LATITUDE'] > 40]
+df_geo = df_geo[df_geo['LATITUDE'] < 41]
+df_geo = df_geo[df_geo['LONGITUDE'] > -74.5]
+df_geo = df_geo[df_geo['LONGITUDE'] < -73.5]
+
+# Convert the dataframe into a GeoDataFrame so we can plot it on a map
+gdf = gpd.GeoDataFrame(df_geo, geometry=gpd.points_from_xy(df_geo['LONGITUDE'], df_geo['LATITUDE']), crs='EPSG:4326')
+
+'''
+gpd.points_from_xy() pairs up the longitude and latitude columns into geometry points
+crs EPSG:4326 is just the standard GPS coordinate system
+'''
+
+# Give each vehicle type its own color
+color_map = {'BIKE': 'orange', 'MOTORCYCLE': 'purple', 'E-BIKE': 'cyan'}
+
+# Build a separate trace (layer) for each vehicle type
+traces = []
+for vtype, group in gdf.groupby('VEHICLE TYPE CODE 1'):
+    trace = pl.graph_objs.Scattermapbox(
+        lat=group.geometry.y,
+        lon=group.geometry.x,
+        mode='markers',
+        marker=pl.graph_objs.scattermapbox.Marker(size=5, color=color_map.get(vtype, 'gray'), opacity=0.5),
+        name=vtype,
+        text='Borough: ' + group['BOROUGH'] + ' | Hour: ' + group['CRASH TIME'].astype(str) + ' | Injured: ' + group['NUMBER OF PERSONS INJURED'].astype(str),
+        hoverinfo='text'
+    )
+    traces.append(trace)
+
+'''
+We loop through each vehicle type and make a seperate layer for it
+That way each one gets its own color and can be toggled on/off in the legend
+'''
+
+# Set up the map layout
+layout = pl.graph_objs.Layout(
+    title='NYC VRU Crash Locations by Vehicle Type',
+    mapbox=pl.graph_objs.layout.Mapbox(style='open-street-map', center=pl.graph_objs.layout.mapbox.Center(lat=40.730, lon=-73.935), zoom=10),
+    height=700
+)
+
+# Put it all together and show it
+fig = pl.graph_objs.Figure(data=traces, layout=layout)
+pl.offline.plot(fig, filename='vru_crashes_map.html', auto_open=True)
